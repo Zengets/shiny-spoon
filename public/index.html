@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PPT 转换为图片服务 - 高保真生产环境渲染</title>
+  <!-- 引入现代字体 Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <!-- 引入 Lucide 图标 -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 背景动效流光 -->
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="app-container">
+    <!-- 头部区域 -->
+    <header class="main-header glass-panel">
+      <div class="logo-area">
+        <i data-lucide="presentation" class="logo-icon"></i>
+        <div>
+          <h1>PPT to Image</h1>
+          <p>高稳定 · 高还原 · 生产级服务端渲染</p>
+        </div>
+      </div>
+
+      <!-- 依赖状态面板 -->
+      <div class="status-panel">
+        <div class="status-item" id="libreoffice-status">
+          <span class="status-indicator warning"></span>
+          <span class="status-text">LibreOffice: 检测中...</span>
+        </div>
+        <div class="status-item" id="poppler-status">
+          <span class="status-indicator warning"></span>
+          <span class="status-text">Poppler (pdftoppm): 检测中...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 依赖环境警告与安装指南 (默认隐藏) -->
+    <div id="dependency-warning" class="warning-panel glass-panel hidden">
+      <div class="warning-header">
+        <i data-lucide="alert-triangle" class="warning-icon"></i>
+        <h3>检测到系统依赖未就绪</h3>
+        <p>本项目基于 LibreOffice 和 Poppler 渲染。为了正常工作，请在服务器/本地安装以下依赖：</p>
+      </div>
+      <div class="installation-guides">
+        <div class="guide-box">
+          <h4><i data-lucide="terminal"></i> macOS (Homebrew)</h4>
+          <code>brew install --cask libreoffice<br>brew install poppler</code>
+        </div>
+        <div class="guide-box">
+          <h4><i data-lucide="terminal"></i> Ubuntu / Debian</h4>
+          <code>sudo apt-get update<br>sudo apt-get install -y libreoffice poppler-utils</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- 主工作区 -->
+    <main class="main-workspace">
+      <!-- 左侧文件管理栏 -->
+      <section class="left-pane">
+        <!-- 上传区域 -->
+        <div class="upload-card glass-panel" id="drop-zone">
+          <input type="file" id="file-input" accept=".ppt,.pptx" hidden>
+          <div class="upload-content">
+            <i data-lucide="upload-cloud" class="upload-icon"></i>
+            <h3>拖拽 PPT/PPTX 文件至此</h3>
+            <p>或者 <span>浏览本地文件</span></p>
+            <span class="file-limits">支持 .ppt 和 .pptx 格式</span>
+          </div>
+          <!-- 实时上传/转换进度条 -->
+          <div class="progress-bar-container hidden" id="upload-progress-container">
+            <div class="progress-info">
+              <span id="progress-status">正在上传并转换...</span>
+              <span id="progress-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 文件列表 -->
+        <div class="file-list-card glass-panel">
+          <div class="card-header">
+            <h3><i data-lucide="files"></i> 文件列表</h3>
+            <button class="btn-refresh" id="btn-refresh" title="刷新列表">
+              <i data-lucide="rotate-cw"></i>
+            </button>
+          </div>
+          <div class="file-list" id="file-list-container">
+            <!-- 骨架屏加载状态 -->
+            <div class="list-placeholder">
+              <i data-lucide="loader" class="animate-spin"></i>
+              <p>正在加载文件列表...</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右侧预览器 -->
+      <section class="right-pane glass-panel" id="preview-pane">
+        <!-- 默认未选中状态 -->
+        <div class="preview-empty" id="preview-empty-state">
+          <i data-lucide="image" class="empty-icon"></i>
+          <h3>暂无预览</h3>
+          <p>请在左侧列表中选择一个幻灯片文档进行查看</p>
+        </div>
+
+        <!-- 转换中/未转换状态 -->
+        <div class="preview-unconverted hidden" id="preview-unconverted-state">
+          <i data-lucide="file-warning" class="unconverted-icon"></i>
+          <h3 id="unconverted-title">文档尚未转换为图片</h3>
+          <p>由于系统原因或通过文件夹直接拷贝，该文档可能尚未被转换。</p>
+          <button class="btn-primary" id="btn-trigger-convert">
+            <i data-lucide="play"></i> 立即开始转换
+          </button>
+        </div>
+
+        <!-- 转换后的幻灯片播放器 -->
+        <div class="preview-viewer hidden" id="preview-viewer-state">
+          <!-- 播放器顶部操作栏 -->
+          <div class="viewer-header">
+            <h3 id="viewer-title">PPT 演示文稿</h3>
+            <div class="viewer-actions">
+              <button class="btn-secondary" id="btn-download-pdf" title="下载转换后的 PDF">
+                <i data-lucide="download"></i> PDF
+              </button>
+              <button class="btn-secondary" id="btn-fullscreen" title="全屏演示">
+                <i data-lucide="maximize"></i> 全屏
+              </button>
+            </div>
+          </div>
+
+          <!-- 图片展示大区 -->
+          <div class="viewer-display">
+            <button class="nav-arrow prev" id="btn-prev-slide">
+              <i data-lucide="chevron-left"></i>
+            </button>
+            
+            <div class="slide-container">
+              <img id="main-slide-img" src="" alt="幻灯片预览">
+              <div class="slide-loader hidden" id="slide-img-loader">
+                <i data-lucide="loader" class="animate-spin"></i>
+              </div>
+            </div>
+
+            <button class="nav-arrow next" id="btn-next-slide">
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+
+          <!-- 控制器与缩略图 -->
+          <div class="viewer-controls">
+            <div class="control-row">
+              <span class="slide-counter" id="slide-counter">1 / 1</span>
+              <div class="play-controls">
+                <button class="btn-control" id="btn-play-slides" title="自动播放">
+                  <i data-lucide="play"></i>
+                </button>
+              </div>
+            </div>
+            <!-- 缩略图滚动列表 -->
+            <div class="thumbnail-list" id="thumbnail-container">
+              <!-- 缩略图由 JS 动态生成 -->
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

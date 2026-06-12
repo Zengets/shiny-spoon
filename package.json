@@ -1,0 +1,29 @@
+{
+  "name": "ppt-to-image-service",
+  "version": "1.0.0",
+  "description": "A robust Node.js service to convert PPT/PPTX to high-quality PNG images using LibreOffice and Poppler.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "keywords": [
+    "pptx",
+    "ppt",
+    "pdf",
+    "png",
+    "converter",
+    "libreoffice",
+    "poppler"
+  ],
+  "author": "Antigravity",
+  "license": "MIT",
+  "dependencies": {
+    "chokidar": "^4.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
