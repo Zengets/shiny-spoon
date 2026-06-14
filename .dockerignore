@@ -1,0 +1,15 @@
+.git
+.gitignore
+.codegraph
+node_modules
+npm-debug.log
+conversions.db
+output/*
+input/*
+Dockerfile
+docker-compose.yml
+README.md
+api.html
+*.tar
+*.zip
+*.log

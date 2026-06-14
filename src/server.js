@@ -48,13 +48,13 @@ const upload = multer({
 });
 
 // API 1: 检查系统依赖环境
-app.get('/api/status', (req, res) => {
+app.get('/status', (req, res) => {
   const status = checkDependencies();
   res.json(status);
 });
 
 // API 2: 获取输入目录下的文档列表及其转换状态（基于 SQLite 数据库）
-app.get('/api/files', (req, res) => {
+app.get('/files', (req, res) => {
   try {
     const records = db.getAllConversions();
     
@@ -110,7 +110,7 @@ app.get('/api/files', (req, res) => {
 });
 
 // API 3: 上传 PPT/PPTX/PDF 文件并自动触发转换，支持传递自定义 ID
-app.post('/api/upload', upload.single('file'), async (req, res) => {
+app.post('/upload', upload.single('file'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: '未接收到有效文件。' });
   }
@@ -148,7 +148,7 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
 });
 
 // API 4: 手动重新触发某个已有记录的转换 (ID 或 文件名)
-app.post('/api/convert/:id', async (req, res) => {
+app.post('/convert/:id', async (req, res) => {
   const id = req.params.id;
   
   // 先去数据库查
@@ -196,7 +196,7 @@ app.post('/api/convert/:id', async (req, res) => {
 });
 
 // API 5: 删除输入源文件和对应的输出结果及数据库记录 (通过 ID)
-app.delete('/api/delete/:id', (req, res) => {
+app.delete('/delete/:id', (req, res) => {
   const id = req.params.id;
   
   try {
@@ -262,7 +262,7 @@ app.delete('/api/delete/:id', (req, res) => {
 });
 
 // API 6: 导出指定 ID 文件夹下的所有转换图片 URL 及 PDF 路径
-app.get('/api/export/:id', (req, res) => {
+app.get('/export/:id', (req, res) => {
   const id = req.params.id;
   try {
     const record = db.getConversion(id);

@@ -1,5 +1,12 @@
 FROM node:22-slim
 
+# 更换 Debian 软件源为阿里云镜像站，解决国内网络环境下载超时及断连问题
+RUN if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources; \
+    else \
+      sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list; \
+    fi
+
 # 安装 LibreOffice Headless 运行环境、Poppler (pdftoppm) 工具、中文字体库和 fontconfig 诊断工具
 RUN apt-get update && apt-get install -y \
     libreoffice \

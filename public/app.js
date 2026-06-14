@@ -2,7 +2,20 @@
 // 前端应用交互逻辑
 // ==========================================================================
 
-const API_BASE = '';
+// 自动计算 API_BASE 以支持子路径部署（例如 /convert-api）
+let API_BASE = '';
+const pathParts = window.location.pathname.split('/');
+if (pathParts.length > 0) {
+  const lastPart = pathParts[pathParts.length - 1];
+  if (lastPart.includes('.') || lastPart === 'index.html' || lastPart === '') {
+    pathParts.pop();
+  }
+}
+API_BASE = pathParts.join('/');
+if (API_BASE.endsWith('/')) {
+  API_BASE = API_BASE.slice(0, -1);
+}
+
 let filesList = [];
 let activeFile = null;
 let currentSlideIndex = 0;
@@ -59,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // 检测服务端依赖环境
 async function checkSystemStatus() {
   try {
-    const res = await fetch(`${API_BASE}/api/status`);
+    const res = await fetch(`${API_BASE}/status`);
     const status = await res.json();
     
     // 更新 LibreOffice 状态
@@ -100,7 +113,7 @@ function updateStatusIndicator(element, isAvailable, text) {
 // 获取输入目录中的文件列表
 async function fetchFiles(selectFilename = null) {
   try {
-    const res = await fetch(`${API_BASE}/api/files`);
+    const res = await fetch(`${API_BASE}/files`);
     filesList = await res.json();
     
     renderFileList(filesList);
@@ -254,7 +267,7 @@ function showState(state) {
 async function triggerManualConvert(idOrFilename) {
   showProgress('正在渲染幻灯片，请稍候...', 50);
   try {
-    const res = await fetch(`${API_BASE}/api/convert/${encodeURIComponent(idOrFilename)}`, {
+    const res = await fetch(`${API_BASE}/convert/${encodeURIComponent(idOrFilename)}`, {
       method: 'POST'
     });
     const data = await res.json();
@@ -279,7 +292,7 @@ async function deleteFile(idOrFilename) {
   }
   
   try {
-    const res = await fetch(`${API_BASE}/api/delete/${encodeURIComponent(idOrFilename)}`, {
+    const res = await fetch(`${API_BASE}/delete/${encodeURIComponent(idOrFilename)}`, {
       method: 'DELETE'
     });
     const data = await res.json();
@@ -444,7 +457,7 @@ function handleUpload(file) {
   formData.append('id', taskId);
 
   const xhr = new XMLHttpRequest();
-  xhr.open('POST', `${API_BASE}/api/upload`, true);
+  xhr.open('POST', `${API_BASE}/upload`, true);
 
   // 监听进度
   xhr.upload.onprogress = (e) => {
