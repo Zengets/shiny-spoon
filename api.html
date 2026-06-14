@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shiny Spoon - PPT/PDF 转换服务 API 接口文档</title>
+  <!-- 引入 Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Google FontsOutfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* 引入毛玻璃与深色质感微调 */
+    body {
+      background: radial-gradient(circle at 10% 20%, rgba(12, 17, 29, 1) 0%, rgba(19, 26, 42, 1) 90.1%);
+    }
+    .code-scroll::-webkit-scrollbar {
+      height: 6px;
+      width: 6px;
+    }
+    .code-scroll::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    .code-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body class="text-slate-100 font-sans min-height-screen pb-16 antialiased">
+  
+  <div class="max-w-5xl mx-auto px-6 pt-12">
+    <!-- Header -->
+    <header class="border-b border-slate-800 pb-8 mb-12 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-sky-500/10">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight font-display bg-gradient-to-r from-white via-slate-100 to-sky-400 bg-clip-text text-transparent">Shiny Spoon</h1>
+          <p class="text-slate-400 text-sm mt-1">PPT/PPTX/PDF 转高清图片服务 API 接口规范说明书</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 self-start md:self-auto">
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+          运行中 (3000端口)
+        </span>
+        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+          Node.js 22+ 内置 SQLite
+        </span>
+      </div>
+    </header>
+
+    <!-- 说明标签卡片 -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+      <div class="p-6 rounded-2xl bg-emerald-950/20 border border-emerald-500/10 flex items-start gap-4">
+        <div class="p-2.5 rounded-lg bg-emerald-500/10 text-emerald-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 009 11V7a4 4 0 00-8 0v4c0 3.856-1.157 7.42-3.142 10.438m9.043-10.438c.059.09.115.18.17.27m0 0A13.95 13.95 0 0012 11V7a4 4 0 00-8 0v4c0 3.856-1.157 7.42-3.142 10.438"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-emerald-300 flex items-center gap-2">
+            对外/外部集成接口 (External API)
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 rounded">外部可用</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">提供给客户端、主系统或其他微服务调用的接口。用于执行文档上传、自定义 ID 隔离转换、查询具体导出结果及级联删除数据等核心业务流程。</p>
+        </div>
+      </div>
+      <div class="p-6 rounded-2xl bg-blue-950/20 border border-blue-500/10 flex items-start gap-4">
+        <div class="p-2.5 rounded-lg bg-blue-500/10 text-blue-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+          </svg>
+        </div>
+        <div>
+          <h3 class="font-semibold text-blue-300 flex items-center gap-2">
+            内部服务/环境检测接口 (Internal System API)
+            <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-blue-500/20 text-blue-300 rounded">系统内部</span>
+          </h3>
+          <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">用于 NodeJS 服务内部状态读取、自带的前端 Web 交互面板加载、或是运维探针对底层运行环境依赖（如 LibreOffice、Poppler 的路径和可用性）的健康巡检接口。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- API List -->
+    <div class="space-y-8">
+      
+      <!-- API 1: /api/upload -->
+      <article class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-slate-700/60 transition-all duration-300 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 bg-emerald-600 text-white font-bold text-sm rounded-lg uppercase tracking-wider">POST</span>
+            <span class="text-lg font-bold font-mono text-white">/api/upload</span>
+          </div>
+          <span class="px-3 py-1 text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+            对外/外部集成接口
+          </span>
+        </div>
+        <p class="text-sm text-slate-300 mb-6">上传 PPT/PPTX/PDF 文件并自动触发高清渲染。对于 PDF 格式，服务将跳过 LibreOffice，实现直通极速转换；支持传递自定义 ID 以确保在物理文件夹级别实现数据隔离。</p>
+        
+        <!-- Headers/Params -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-xs border-t border-slate-800/80 pt-4">
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Request Headers</h4>
+            <code class="text-slate-300">Content-Type: multipart/form-data</code>
+          </div>
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Body Fields (Form Data)</h4>
+            <ul class="space-y-1.5 text-slate-300">
+              <li><strong class="font-mono text-sky-400">file</strong> (File, 必填): 上传的 PPT / PPTX / PDF 文档</li>
+              <li><strong class="font-mono text-sky-400">id</strong> (String, 可选): 唯一的转换任务 ID。若省略则服务端自动分配 UUID。</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Code Block -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Response Sample (200 OK)</h4>
+          <pre class="code-scroll bg-slate-950 p-4 rounded-xl font-mono text-xs text-sky-300 overflow-x-auto border border-slate-800/60"><code>{
+  "success": true,
+  "message": "文件上传并成功转换为图片！",
+  "id": "my_custom_task_001",
+  "file": "proposal.pptx",
+  "pdfPath": "/app/output/my_custom_task_001/proposal.pdf",
+  "images": ["slide-1.png", "slide-2.png", "slide-3.png"],
+  "baseName": "proposal",
+  "outputDir": "/app/output/my_custom_task_001"
+}</code></pre>
+        </div>
+      </article>
+
+      <!-- API 2: /api/export/:id -->
+      <article class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-slate-700/60 transition-all duration-300 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 bg-blue-600 text-white font-bold text-sm rounded-lg uppercase tracking-wider">GET</span>
+            <span class="text-lg font-bold font-mono text-white">/api/export/:id</span>
+          </div>
+          <span class="px-3 py-1 text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+            对外/外部集成接口
+          </span>
+        </div>
+        <p class="text-sm text-slate-300 mb-6">根据设定的任务 ID，导出该任务生成的全部高清 PNG 图片路径与 PDF 副本。常用于主系统（如 NodeJS 服务）在导出操作时直接读取本服务的图档资源链接。</p>
+        
+        <!-- Headers/Params -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-xs border-t border-slate-800/80 pt-4">
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Path Parameters</h4>
+            <code class="text-slate-300">id</code>: 上传或自动生成的任务唯一 ID 标识。
+          </div>
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Response Description</h4>
+            <p class="text-slate-300 leading-relaxed">返回 JSON 报文，直接输出每个转换页的真实 Web 静态资源访问 URL 列表 (`imageUrls`) 及 PDF URL。</p>
+          </div>
+        </div>
+
+        <!-- Code Block -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Response Sample (200 OK)</h4>
+          <pre class="code-scroll bg-slate-950 p-4 rounded-xl font-mono text-xs text-sky-300 overflow-x-auto border border-slate-800/60"><code>{
+  "success": true,
+  "id": "my_custom_task_001",
+  "filename": "proposal.pptx",
+  "converted": true,
+  "outputDir": "/app/output/my_custom_task_001",
+  "pdfPath": "/app/output/my_custom_task_001/proposal.pdf",
+  "pdfUrl": "/output/my_custom_task_001/proposal.pdf",
+  "images": ["slide-1.png", "slide-2.png", "slide-3.png"],
+  "imageUrls": [
+    "/output/my_custom_task_001/slide-1.png",
+    "/output/my_custom_task_001/slide-2.png",
+    "/output/my_custom_task_001/slide-3.png"
+  ]
+}</code></pre>
+        </div>
+      </article>
+
+      <!-- API 3: /api/delete/:id -->
+      <article class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-slate-700/60 transition-all duration-300 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 bg-rose-600 text-white font-bold text-sm rounded-lg uppercase tracking-wider">DELETE</span>
+            <span class="text-lg font-bold font-mono text-white">/api/delete/:id</span>
+          </div>
+          <span class="px-3 py-1 text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+            对外/外部集成接口
+          </span>
+        </div>
+        <p class="text-sm text-slate-300 mb-6">物理删除指定 ID 下在服务器上存储的所有实体数据文件（包含物理上传的源文件、转换生成的全部高清 PNG 图片与 PDF 副本），并在 SQLite 数据库中注销该记录。**支持以 ID 进行精确级联删除，或兼容旧版以文件名删除。**</p>
+        
+        <!-- Headers/Params -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-xs border-t border-slate-800/80 pt-4">
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Path Parameters</h4>
+            <code class="text-slate-300">id</code>: 任务 ID（或旧版的文件名）。
+          </div>
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Safety Features</h4>
+            <p class="text-slate-300 leading-relaxed">删除动作将在文件系统物理执行级联清理，清理后不可恢复，有利于释放磁盘空间。</p>
+          </div>
+        </div>
+
+        <!-- Code Block -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Response Sample (200 OK)</h4>
+          <pre class="code-scroll bg-slate-950 p-4 rounded-xl font-mono text-xs text-sky-300 overflow-x-auto border border-slate-800/60"><code>{
+  "success": true,
+  "message": "删除成功！",
+  "deletedSource": true,
+  "deletedOutput": true
+}</code></pre>
+        </div>
+      </article>
+
+      <!-- API 4: /api/convert/:id -->
+      <article class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-slate-700/60 transition-all duration-300 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 bg-emerald-600 text-white font-bold text-sm rounded-lg uppercase tracking-wider">POST</span>
+            <span class="text-lg font-bold font-mono text-white">/api/convert/:id</span>
+          </div>
+          <span class="px-3 py-1 text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">
+            对外/外部集成接口
+          </span>
+        </div>
+        <p class="text-sm text-slate-300 mb-6">手动重新触发指定 ID（或文件名）的任务进行二次转换和渲染。这也会加入到最大并发数为 2 的全局控制队列中排队，确保核心负载安全。</p>
+        
+        <!-- Headers/Params -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-xs border-t border-slate-800/80 pt-4">
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Path Parameters</h4>
+            <code class="text-slate-300">id</code>: 任务 ID（或旧版的文件名）。
+          </div>
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Scenario</h4>
+            <p class="text-slate-300 leading-relaxed">用于物理文件丢失需要重造、或者在对系统配置中的字体加载调整后快速重建图库状态。</p>
+          </div>
+        </div>
+
+        <!-- Code Block -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Response Sample (200 OK)</h4>
+          <pre class="code-scroll bg-slate-950 p-4 rounded-xl font-mono text-xs text-sky-300 overflow-x-auto border border-slate-800/60"><code>{
+  "success": true,
+  "message": "重新转换成功！",
+  "id": "my_custom_task_001",
+  "file": "proposal.pptx",
+  "pdfPath": "/app/output/my_custom_task_001/proposal.pdf",
+  "images": ["slide-1.png", "slide-2.png", "slide-3.png"],
+  "baseName": "proposal",
+  "outputDir": "/app/output/my_custom_task_001"
+}</code></pre>
+        </div>
+      </article>
+
+      <!-- API 5: /api/status -->
+      <article class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-slate-700/60 transition-all duration-300 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 bg-blue-600 text-white font-bold text-sm rounded-lg uppercase tracking-wider">GET</span>
+            <span class="text-lg font-bold font-mono text-white">/api/status</span>
+          </div>
+          <span class="px-3 py-1 text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full">
+            内部服务/环境检测接口
+          </span>
+        </div>
+        <p class="text-sm text-slate-300 mb-6">检测服务器上运行本转换服务的底层二进制依赖环境。主要由系统巡检服务、K8s 探针或自带的前端 UI 初始化时调用，以检验宿主机环境是否真正就绪。</p>
+        
+        <!-- Headers/Params -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-xs border-t border-slate-800/80 pt-4">
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Check Targets</h4>
+            <ul class="space-y-1 text-slate-300">
+              <li>- LibreOffice 无头运行绝对路径、可用性及具体版本</li>
+              <li>- Poppler pdftoppm 工具绝对路径、可用性及版本</li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Internal Purpose</h4>
+            <p class="text-slate-300 leading-relaxed">如果环境存在任何不可用问题（比如 Docker 内命令异常或库缺失），会输出相应的报错明文，指示如何安装依赖。</p>
+          </div>
+        </div>
+
+        <!-- Code Block -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Response Sample (200 OK)</h4>
+          <pre class="code-scroll bg-slate-950 p-4 rounded-xl font-mono text-xs text-sky-300 overflow-x-auto border border-slate-800/60"><code>{
+  "libreOffice": {
+    "path": "/usr/bin/soffice",
+    "available": true,
+    "version": "LibreOffice 24.2.2.2 420(Build:2)",
+    "error": null
+  },
+  "poppler": {
+    "path": "/usr/bin/pdftoppm",
+    "available": true,
+    "version": "pdftoppm version 22.02.0",
+    "error": null
+  }
+}</code></pre>
+        </div>
+      </article>
+
+      <!-- API 6: /api/files -->
+      <article class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 hover:border-slate-700/60 transition-all duration-300 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div class="flex items-center gap-3">
+            <span class="px-3 py-1 bg-blue-600 text-white font-bold text-sm rounded-lg uppercase tracking-wider">GET</span>
+            <span class="text-lg font-bold font-mono text-white">/api/files</span>
+          </div>
+          <span class="px-3 py-1 text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full">
+            内部服务/环境检测接口
+          </span>
+        </div>
+        <p class="text-sm text-slate-300 mb-6">拉取 SQLite 数据库中记录的所有文件转换任务的历史流水。主要由服务自带的 Web 控制面板在首次加载时使用，以表格形式将转换状态同步渲染出来。</p>
+        
+        <!-- Headers/Params -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 text-xs border-t border-slate-800/80 pt-4">
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Database Cache</h4>
+            <p class="text-slate-300 leading-relaxed">由于集成了原生 SQLite，读取文件列表不再需要频繁轮询全磁盘，能够大幅削减高并发读取时的 IO 负载开销。</p>
+          </div>
+          <div>
+            <h4 class="font-semibold text-slate-400 uppercase tracking-wider mb-2">Disk Cross Validation</h4>
+            <p class="text-slate-300 leading-relaxed">系统每次都会交叉对比数据库与磁盘的真实物理文件，若物理目录被意外手动删除，会自动动态标记为“未渲染”。</p>
+          </div>
+        </div>
+
+        <!-- Code Block -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Response Sample (200 OK)</h4>
+          <pre class="code-scroll bg-slate-950 p-4 rounded-xl font-mono text-xs text-sky-300 overflow-x-auto border border-slate-800/60"><code>[
+  {
+    "id": "my_custom_task_001",
+    "name": "proposal.pptx",
+    "baseName": "proposal",
+    "size": 1256384,
+    "mtime": "2026-06-14T10:02:09.733Z",
+    "converted": true,
+    "imagesCount": 3,
+    "images": ["slide-1.png", "slide-2.png", "slide-3.png"]
+  }
+]</code></pre>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-16 pt-8 border-t border-slate-800 text-center text-xs text-slate-500 leading-relaxed">
+      <p>Designed and Implemented for Zengets/shiny-spoon Service. Built on Node.js 22 & SQLite.</p>
+      <p class="mt-1">© 2026 Antigravity. MIT Licensed.</p>
+    </footer>
+  </div>
+
+</body>
+</html>

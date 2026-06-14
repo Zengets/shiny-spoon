@@ -31,7 +31,7 @@ export function startWatcher() {
       return;
     }
 
-    if (ext === '.pptx' || ext === '.ppt') {
+    if (ext === '.pptx' || ext === '.ppt' || ext === '.pdf') {
       console.log(`[Watcher] [自动触发] 检测到新文件: ${fileName}`);
       try {
         await convertPptToImages(filePath);
@@ -51,7 +51,7 @@ export function startWatcher() {
       return;
     }
 
-    if (ext === '.pptx' || ext === '.ppt') {
+    if (ext === '.pptx' || ext === '.ppt' || ext === '.pdf') {
       console.log(`[Watcher] [自动触发] 检测到文件修改: ${fileName}`);
       try {
         await convertPptToImages(filePath);

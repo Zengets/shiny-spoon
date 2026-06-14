@@ -15,6 +15,7 @@ const elements = {
   depWarning: document.getElementById('dependency-warning'),
   dropZone: document.getElementById('drop-zone'),
   fileInput: document.getElementById('file-input'),
+  taskIdInput: document.getElementById('task-id-input'),
   progressContainer: document.getElementById('upload-progress-container'),
   progressStatus: document.getElementById('progress-status'),
   progressPercent: document.getElementById('progress-percent'),
@@ -106,10 +107,10 @@ async function fetchFiles(selectFilename = null) {
     
     // 如果有指定选中的文件，或者之前有选中且该文件仍在列表中
     if (selectFilename) {
-      const found = filesList.find(f => f.name === selectFilename);
+      const found = filesList.find(f => f.name === selectFilename || f.id === selectFilename);
       if (found) selectFile(found);
     } else if (activeFile) {
-      const found = filesList.find(f => f.name === activeFile.name);
+      const found = filesList.find(f => f.name === activeFile.name || f.id === activeFile.id);
       if (found) {
         selectFile(found);
       } else {
@@ -144,7 +145,7 @@ function renderFileList(files) {
   
   files.forEach(file => {
     const item = document.createElement('div');
-    item.className = `file-item ${activeFile && activeFile.name === file.name ? 'active' : ''}`;
+    item.className = `file-item ${activeFile && (activeFile.id === file.id || activeFile.name === file.name) ? 'active' : ''}`;
     
     const sizeStr = formatBytes(file.size);
     const dateStr = new Date(file.mtime).toLocaleString('zh-CN', { month: 'numeric', day: 'numeric', hour: '2-digit', minute:'2-digit' });
@@ -152,10 +153,17 @@ function renderFileList(files) {
       ? `<span class="badge success">已渲染 (${file.imagesCount}P)</span>` 
       : `<span class="badge pending">未渲染</span>`;
       
+    // 根据后缀渲染图标类型与颜色
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+    const isPdf = ext === '.pdf';
+    const iconName = isPdf ? 'file-text' : 'presentation';
+    const iconColor = isPdf ? '#10b981' : '#ef4444'; // PDF 绿，PPT 红
+    const iconBg = isPdf ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)';
+      
     item.innerHTML = `
       <div class="file-info">
-        <div class="file-icon-box">
-          <i data-lucide="presentation" style="width: 18px; height: 18px;"></i>
+        <div class="file-icon-box" style="background: ${iconBg}; color: ${iconColor};">
+          <i data-lucide="${iconName}" style="width: 18px; height: 18px;"></i>
         </div>
         <div class="file-details">
           <div class="file-name" title="${file.name}">${file.name}</div>
@@ -168,10 +176,10 @@ function renderFileList(files) {
         </div>
       </div>
       <div class="file-actions">
-        <button class="btn-icon convert" title="重新转换" onclick="event.stopPropagation(); triggerManualConvert('${file.name}')">
+        <button class="btn-icon convert" title="重新转换" onclick="event.stopPropagation(); triggerManualConvert('${file.id || file.name}')">
           <i data-lucide="play" style="width: 14px; height: 14px;"></i>
         </button>
-        <button class="btn-icon delete" title="删除" onclick="event.stopPropagation(); deleteFile('${file.name}')">
+        <button class="btn-icon delete" title="删除" onclick="event.stopPropagation(); deleteFile('${file.id || file.name}')">
           <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
         </button>
       </div>
@@ -205,7 +213,7 @@ function selectFile(file) {
   // 更新列表项 active 状态
   const items = elements.fileListContainer.querySelectorAll('.file-item');
   items.forEach((item, index) => {
-    if (filesList[index] && filesList[index].name === file.name) {
+    if (filesList[index] && (filesList[index].id === file.id || filesList[index].name === file.name)) {
       item.classList.add('active');
     } else {
       item.classList.remove('active');
@@ -218,7 +226,7 @@ function selectFile(file) {
   if (!file.converted) {
     showState('unconverted');
     elements.unconvertedTitle.textContent = `"${file.name}" 尚未渲染图片`;
-    elements.btnTriggerConvert.onclick = () => triggerManualConvert(file.name);
+    elements.btnTriggerConvert.onclick = () => triggerManualConvert(file.id || file.name);
   } else {
     showState('viewer');
     elements.viewerTitle.textContent = file.name;
@@ -243,17 +251,17 @@ function showState(state) {
 }
 
 // 触发手动转换
-async function triggerManualConvert(filename) {
+async function triggerManualConvert(idOrFilename) {
   showProgress('正在渲染幻灯片，请稍候...', 50);
   try {
-    const res = await fetch(`${API_BASE}/api/convert/${encodeURIComponent(filename)}`, {
+    const res = await fetch(`${API_BASE}/api/convert/${encodeURIComponent(idOrFilename)}`, {
       method: 'POST'
     });
     const data = await res.json();
     
     if (res.ok && data.success) {
       hideProgress();
-      await fetchFiles(filename); // 重新拉取并选中该文件
+      await fetchFiles(idOrFilename); // 重新拉取并选中该文件
     } else {
       hideProgress();
       alert(`转换失败: ${data.error || '未知错误'}`);
@@ -265,19 +273,19 @@ async function triggerManualConvert(filename) {
 }
 
 // 删除源文件及输出结果
-async function deleteFile(filename) {
-  if (!confirm(`确认要永久删除文件 "${filename}" 及其所有转换生成的图片吗？`)) {
+async function deleteFile(idOrFilename) {
+  if (!confirm(`确认要永久删除该文件及其所有转换生成的图片吗？`)) {
     return;
   }
   
   try {
-    const res = await fetch(`${API_BASE}/api/delete/${encodeURIComponent(filename)}`, {
+    const res = await fetch(`${API_BASE}/api/delete/${encodeURIComponent(idOrFilename)}`, {
       method: 'DELETE'
     });
     const data = await res.json();
     
     if (res.ok && data.success) {
-      if (activeFile && activeFile.name === filename) {
+      if (activeFile && (activeFile.id === idOrFilename || activeFile.name === idOrFilename)) {
         activeFile = null;
         showState('empty');
       }
@@ -299,7 +307,7 @@ function renderSlidesPlayer() {
   
   // PDF 下载按钮
   elements.btnDownloadPdf.onclick = () => {
-    window.open(`${API_BASE}/output/${activeFile.baseName}/${activeFile.baseName}.pdf`, '_blank');
+    window.open(`${API_BASE}/output/${encodeURIComponent(activeFile.id)}/${encodeURIComponent(activeFile.baseName)}.pdf`, '_blank');
   };
   
   // 渲染大图
@@ -317,7 +325,7 @@ function loadSlideImage(index) {
   elements.slideImgLoader.classList.remove('hidden');
   
   const imgName = activeFile.images[index];
-  const url = `${API_BASE}/output/${encodeURIComponent(activeFile.baseName)}/${encodeURIComponent(imgName)}`;
+  const url = `${API_BASE}/output/${encodeURIComponent(activeFile.id)}/${encodeURIComponent(imgName)}`;
   
   // 图片淡出
   elements.mainSlideImg.style.opacity = '0.3';
@@ -343,7 +351,7 @@ function renderThumbnails() {
     const thumb = document.createElement('div');
     thumb.className = `thumb-item ${index === currentSlideIndex ? 'active' : ''}`;
     
-    const url = `${API_BASE}/output/${encodeURIComponent(activeFile.baseName)}/${encodeURIComponent(imgName)}`;
+    const url = `${API_BASE}/output/${encodeURIComponent(activeFile.id)}/${encodeURIComponent(imgName)}`;
     thumb.innerHTML = `<img src="${url}" alt="Page ${index + 1}">`;
     
     thumb.onclick = () => {
@@ -418,14 +426,22 @@ function stopSlideshow() {
 function handleUpload(file) {
   if (!file) return;
   
+  const taskId = elements.taskIdInput.value.trim();
+  if (!taskId) {
+    alert('请输入任务唯一 ID (必填)');
+    elements.taskIdInput.focus();
+    return;
+  }
+  
   const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-  if (ext !== '.ppt' && ext !== '.pptx') {
-    alert('仅支持上传 PPT / PPTX 格式幻灯片文档');
+  if (ext !== '.ppt' && ext !== '.pptx' && ext !== '.pdf') {
+    alert('仅支持上传 PPT / PPTX / PDF 格式的文档');
     return;
   }
 
   const formData = new FormData();
   formData.append('file', file);
+  formData.append('id', taskId);
 
   const xhr = new XMLHttpRequest();
   xhr.open('POST', `${API_BASE}/api/upload`, true);
@@ -446,7 +462,8 @@ function handleUpload(file) {
       const response = JSON.parse(xhr.responseText);
       setTimeout(() => {
         hideProgress();
-        fetchFiles(response.file); // 刷新文件列表并选中该文件
+        elements.taskIdInput.value = ''; // 转换成功后清空输入框
+        fetchFiles(response.id || response.file); // 刷新文件列表并选中该文件
       }, 500);
     } else {
       hideProgress();

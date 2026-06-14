@@ -64,14 +64,24 @@
     <main class="main-workspace">
       <!-- 左侧文件管理栏 -->
       <section class="left-pane">
+        <!-- 任务 ID 配置栏 -->
+        <div class="id-input-card glass-panel">
+          <div class="input-group">
+            <label for="task-id-input">
+              <i data-lucide="tag" style="width: 16px; height: 16px;"></i> 任务唯一 ID <span class="required">*</span>
+            </label>
+            <input type="text" id="task-id-input" placeholder="请输入唯一 ID (如: task-123)" required>
+          </div>
+        </div>
+
         <!-- 上传区域 -->
         <div class="upload-card glass-panel" id="drop-zone">
-          <input type="file" id="file-input" accept=".ppt,.pptx" hidden>
+          <input type="file" id="file-input" accept=".ppt,.pptx,.pdf" hidden>
           <div class="upload-content">
             <i data-lucide="upload-cloud" class="upload-icon"></i>
-            <h3>拖拽 PPT/PPTX 文件至此</h3>
+            <h3>拖拽 PPT/PPTX/PDF 文件至此</h3>
             <p>或者 <span>浏览本地文件</span></p>
-            <span class="file-limits">支持 .ppt 和 .pptx 格式</span>
+            <span class="file-limits">支持 .ppt、.pptx 和 .pdf 格式</span>
           </div>
           <!-- 实时上传/转换进度条 -->
           <div class="progress-bar-container hidden" id="upload-progress-container">

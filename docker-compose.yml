@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  ppt-converter:
+    build: .
+    container_name: ppt-converter-container
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
+    volumes:
+      # 将输入和输出目录挂载到宿主机，实现文件持久化保留与直接上传映射
+      - ./input:/app/input
+      - ./output:/app/output
+      # 持久化存储 SQLite 数据库状态
+      - ./conversions.db:/app/conversions.db
+    deploy:
+      resources:
+        limits:
+          cpus: '3.0'         # 限制容器最多消耗 3 核 CPU，为 Linux 宿主机预留 1 核确保安全
+          memory: 3.5G        # 限制容器最多使用 3.5GB 内存，防止内存无限飙升撑爆宿主机

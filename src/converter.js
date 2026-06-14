@@ -3,14 +3,16 @@ import util from 'util';
 import path from 'path';
 import fs from 'fs';
 import { getLibreOfficePath, getPdftoppmPath, OUTPUT_DIR, generateFontConfig } from './config.js';
+import { saveConversion } from './db.js';
 
 const execAsync = util.promisify(exec);
 
 // 互斥转换队列，避免多个 LibreOffice 实例并发冲突导致挂起
 class ConversionQueue {
-  constructor() {
+  constructor(concurrency = 1) {
+    this.concurrency = concurrency;
+    this.activeCount = 0;
     this.queue = [];
-    this.processing = false;
   }
 
   push(task) {
@@ -21,8 +23,8 @@ class ConversionQueue {
   }
 
   async next() {
-    if (this.processing || this.queue.length === 0) return;
-    this.processing = true;
+    if (this.activeCount >= this.concurrency || this.queue.length === 0) return;
+    this.activeCount++;
     const { task, resolve, reject } = this.queue.shift();
     try {
       const result = await task();
@@ -30,13 +32,13 @@ class ConversionQueue {
     } catch (err) {
       reject(err);
     } finally {
-      this.processing = false;
+      this.activeCount--;
       this.next();
     }
   }
 }
 
-const libreofficeQueue = new ConversionQueue();
+const globalConversionQueue = new ConversionQueue(2);
 
 /**
  * 将 PPT/PPTX 文件转换为 PDF
@@ -72,7 +74,8 @@ async function convertToPdf(inputPath, tempOutputDir) {
       env: {
         ...process.env,
         FONTCONFIG_FILE: fontConfigPath
-      }
+      },
+      timeout: 120000 // 限制最长执行 120 秒，防僵尸进程挂起
     });
     
     if (!fs.existsSync(expectedPdfPath)) {
@@ -115,7 +118,9 @@ async function convertPdfToPng(pdfPath, outputSubDir) {
   console.log(`[Converter] 执行 pdftoppm 转换: ${cmd}`);
   
   try {
-    await execAsync(cmd);
+    await execAsync(cmd, {
+      timeout: 120000 // 限制最长执行 120 秒，防 pdftoppm 卡死
+    });
     
     // 读取生成的文件列表并以数字大小进行正确排序
     const files = fs.readdirSync(outputSubDir);
@@ -139,33 +144,80 @@ async function convertPdfToPng(pdfPath, outputSubDir) {
  * @param {string} inputPath PPT 文件路径
  * @returns {Promise<{ pdfPath: string, images: string[], baseName: string }>}
  */
-export async function convertPptToImages(inputPath) {
-  if (!fs.existsSync(inputPath)) {
-    throw new Error(`输入文件不存在: ${inputPath}`);
-  }
+export async function convertPptToImages(inputPath, id = null) {
+  return globalConversionQueue.push(() => executeConversion(inputPath, id));
+}
 
-  const ext = path.extname(inputPath);
+async function executeConversion(inputPath, id) {
+  const ext = path.extname(inputPath).toLowerCase();
   const baseName = path.basename(inputPath, ext);
   
-  // 在 outputDir 下为该文件创建一个专属文件夹，存放最终的 PDF 与 PNG 图片
-  const fileOutputDir = path.resolve(OUTPUT_DIR, baseName);
+  // 转换后存放的文件夹以传递的 ID 命名；如果未传 id 则使用 baseName 作为回退
+  const folderName = id || baseName;
+  const fileOutputDir = path.resolve(OUTPUT_DIR, folderName);
+  
   if (!fs.existsSync(fileOutputDir)) {
     fs.mkdirSync(fileOutputDir, { recursive: true });
   }
-  
-  // 1. PPT -> PDF (进入排队，保证单实例稳定性)
-  console.log(`[Converter] [排队] PPTX 到 PDF 转换开始: ${baseName}`);
-  const pdfPath = await libreofficeQueue.push(() => convertToPdf(inputPath, fileOutputDir));
-  console.log(`[Converter] [成功] PDF 转换完成: ${pdfPath}`);
-  
-  // 2. PDF -> PNG
-  console.log(`[Converter] PDF 到 PNG 渲染开始...`);
-  const imagePaths = await convertPdfToPng(pdfPath, fileOutputDir);
-  console.log(`[Converter] [成功] PNG 渲染完成，共 ${imagePaths.length} 张图片`);
-  
-  return {
-    pdfPath,
-    images: imagePaths.map(p => path.basename(p)), // 仅返回文件名，路径可通过 api 拼接
-    baseName
-  };
+
+  const finalId = id || baseName;
+  let pdfPath;
+  let imagePaths;
+
+  try {
+    if (ext === '.pdf') {
+      // 如果是 PDF 文件，直接复制到输出文件夹作为备份，或直接作为 PDF 路径
+      pdfPath = path.resolve(fileOutputDir, `${baseName}.pdf`);
+      fs.copyFileSync(inputPath, pdfPath);
+      console.log(`[Converter] 输入为 PDF，直接开始 PDF 到 PNG 渲染: ${baseName}`);
+    } else {
+      // 1. PPT -> PDF
+      console.log(`[Converter] [执行] PPTX 到 PDF 转换开始: ${baseName}`);
+      pdfPath = await convertToPdf(inputPath, fileOutputDir);
+      console.log(`[Converter] [成功] PDF 转换完成: ${pdfPath}`);
+    }
+    
+    // 2. PDF -> PNG
+    console.log(`[Converter] [执行] PDF 到 PNG 渲染开始...`);
+    imagePaths = await convertPdfToPng(pdfPath, fileOutputDir);
+    console.log(`[Converter] [成功] PNG 渲染完成，共 ${imagePaths.length} 张图片`);
+    
+    const result = {
+      pdfPath,
+      images: imagePaths.map(p => path.basename(p)), // 仅返回文件名
+      baseName,
+      outputDir: fileOutputDir
+    };
+
+    // 存库：转换成功
+    try {
+      saveConversion({
+        id: finalId,
+        filename: path.basename(inputPath),
+        filePath: inputPath,
+        outputDir: fileOutputDir,
+        converted: 1,
+        imagesCount: result.images.length
+      });
+    } catch (dbErr) {
+      console.error(`[Converter] 写入数据库失败: ${dbErr.message}`);
+    }
+
+    return result;
+  } catch (err) {
+    // 存库：转换失败
+    try {
+      saveConversion({
+        id: finalId,
+        filename: path.basename(inputPath),
+        filePath: inputPath,
+        outputDir: fileOutputDir,
+        converted: 0,
+        imagesCount: 0
+      });
+    } catch (dbErr) {
+      console.error(`[Converter] 写入数据库失败: ${dbErr.message}`);
+    }
+    throw err;
+  }
 }

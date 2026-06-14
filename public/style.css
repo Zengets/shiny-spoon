@@ -269,11 +269,60 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0; /* 允许在父级 Flex 中收缩以防被内容撑大 */
 }
 
 /* ==========================================================================
    左侧：上传卡片
    ========================================================================== */
+
+/* ==========================================================================
+   左侧：任务 ID 输入卡片
+   ========================================================================== */
+.id-input-card {
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.id-input-card .input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.id-input-card label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.id-input-card label .required {
+  color: var(--color-danger);
+  margin-left: 2px;
+}
+
+.id-input-card input {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--panel-border);
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: var(--text-main);
+  font-family: var(--font-family);
+  font-size: 0.88rem;
+  outline: none;
+  transition: var(--transition-smooth);
+}
+
+.id-input-card input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
+  background: rgba(0, 0, 0, 0.4);
+}
 
 .upload-card {
   padding: 24px;
@@ -455,9 +504,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(239, 68, 68, 0.1); /* PPT 通常是红色调 */
   border-radius: 8px;
-  color: #ef4444;
+  transition: var(--transition-smooth);
 }
 
 .file-details {
@@ -620,6 +668,7 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  min-width: 0; /* 允许收缩防止宽度拉伸 */
   padding: 20px;
 }
 
@@ -739,6 +788,8 @@ body {
   padding: 12px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.03);
+  width: 100%;
+  min-width: 0; /* 关键：子元素可收缩 */
 }
 
 .control-row {
@@ -778,6 +829,9 @@ body {
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 4px;
+  width: 100%;
+  min-width: 0; /* 允许宽度收缩至滚动条生效 */
+  box-sizing: border-box;
 }
 
 .thumb-item {

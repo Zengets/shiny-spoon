@@ -1,0 +1,32 @@
+FROM node:22-slim
+
+# 安装 LibreOffice Headless 运行环境、Poppler (pdftoppm) 工具、中文字体库和 fontconfig 诊断工具
+RUN apt-get update && apt-get install -y \
+    libreoffice \
+    poppler-utils \
+    fontconfig \
+    fonts-wqy-zenhei \
+    fonts-wqy-microhei \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# 将生产依赖拷贝并单独安装，利用 Docker 层缓存
+COPY package*.json ./
+RUN npm install --production
+
+# 拷贝项目全部源码
+COPY . .
+
+# 创建必要的文件目录
+RUN mkdir -p input output
+
+# 暴露运行端口
+EXPOSE 3000
+
+ENV PORT=3000
+ENV NODE_ENV=production
+
+# 限制 Node 的最大堆内存为 1GB，防止无节制增长引发容器 OOM 被强杀
+CMD ["node", "--max-old-space-size=1024", "src/server.js"]
