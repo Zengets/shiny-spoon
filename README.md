@@ -169,8 +169,8 @@ EXPOSE 3000
 ENV PORT=3000
 ENV NODE_ENV=production
 
-# 限制 Node 的最大堆内存为 1GB，防止无节制增长引发容器 OOM 被强杀
-CMD ["node", "--max-old-space-size=1024", "src/server.js"]
+# 限制 Node 的最大堆内存为 512MB，以在 2GB 限制内为外部 C++ 进程 (LibreOffice 等) 预留 1.5GB 内存
+CMD ["node", "--max-old-space-size=512", "src/server.js"]
 ```
 
 ### 2. Docker Compose 一键编排 (docker-compose.yml)
@@ -200,8 +200,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '3.0'         # 限制容器最多消耗 3 核 CPU，为系统预留 1 核
-          memory: 3.5G        # 限制容器最多使用 3.5G 内存，防止撑爆宿主机
+          cpus: '2.0'         # 限制容器最多消耗 2 核 CPU
+          memory: 2.0G        # 限制容器最多使用 2.0GB 内存，防止 OOM
 ```
 
 使用以下指令一键启动服务：

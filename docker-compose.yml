@@ -19,5 +19,5 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '3.0'         # 限制容器最多消耗 3 核 CPU，为 Linux 宿主机预留 1 核确保安全
-          memory: 3.5G        # 限制容器最多使用 3.5GB 内存，防止内存无限飙升撑爆宿主机
+          cpus: '2.0'         # 限制容器最多消耗 2 核 CPU
+          memory: 2.0G        # 限制容器最多使用 2.0GB 内存，防止 OOM

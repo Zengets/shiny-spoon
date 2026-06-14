@@ -28,5 +28,5 @@ EXPOSE 3000
 ENV PORT=3000
 ENV NODE_ENV=production
 
-# 限制 Node 的最大堆内存为 1GB，防止无节制增长引发容器 OOM 被强杀
-CMD ["node", "--max-old-space-size=1024", "src/server.js"]
+# 限制 Node 的最大堆内存为 512MB，以在 2GB 限制内为外部 C++ 进程 (LibreOffice 等) 预留 1.5GB 内存
+CMD ["node", "--max-old-space-size=512", "src/server.js"]
