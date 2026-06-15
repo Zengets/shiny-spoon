@@ -24,6 +24,11 @@ app.use(express.static(path.resolve(__dirname, '../public')));
 // 允许前端直接访问已转换的输出图片
 app.use('/output', express.static(OUTPUT_DIR));
 
+// 允许直接访问接口文档页面
+app.get('/api.html', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '../api.html'));
+});
+
 // 配置 multer 上传，修复中文文件名可能出现的乱码问题
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

@@ -150,7 +150,7 @@ function getSystemDefaultFont() {
   if (platform === 'darwin') {
     return 'STHeiti'; // Mac 平台默认使用华文黑体
   }
-  return 'Noto Sans CJK SC'; // Linux 生产环境推荐中文（如未安装，可回退到系统已有字体）
+  return 'WenQuanYi Zen Hei'; // Linux 生产环境默认使用文泉驿正黑（对应 Dockerfile 中安装的字体）
 }
 
 // 动态生成 fontconfig 配置文件
@@ -159,6 +159,17 @@ export function generateFontConfig() {
   const configContent = `<?xml version="1.0"?>
 <!DOCTYPE fontconfig SYSTEM "fonts.dtd">
 <fontconfig>
+  <!-- 引入系统默认的 fontconfig 主配置文件，确保加载系统已安装的所有字体 -->
+  <include ignore_missing="yes">/etc/fonts/fonts.conf</include>
+  <include ignore_missing="yes">/opt/homebrew/etc/fonts/fonts.conf</include>
+  <include ignore_missing="yes">/usr/local/etc/fonts/fonts.conf</include>
+  
+  <!-- 兜底包含系统的通用字体目录 -->
+  <dir>/usr/share/fonts</dir>
+  <dir>/usr/local/share/fonts</dir>
+  <dir>/Library/Fonts</dir>
+  <dir>/System/Library/Fonts</dir>
+
   <!-- 1. 强制常见中英文字体映射，避免粗细不均与乱码 -->
   <match target="pattern">
     <test qual="any" name="family">
